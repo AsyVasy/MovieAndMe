@@ -1,8 +1,9 @@
 // Components/Search.js
 
 import React from 'react';
-import { StyleSheet, View, TextInput, Button, Text, FlatList, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, TextInput, Button, Text, FlatList, ActivityIndicator, SafeAreaView } from 'react-native';
 import FilmItem from './FilmItem';
+import FilmList from './FilmList';
 import { getFilmsFromApiWithSearchedText } from '../API/TMDBApi';
 
 class Search extends React.Component {
@@ -15,6 +16,7 @@ class Search extends React.Component {
 			films: [],
 			isLoading: false,
 		};
+		this._loadFilms = this._loadFilms.bind(this);
 	}
 
 	_loadFilms() {
@@ -48,6 +50,11 @@ class Search extends React.Component {
 		);
 	}
 
+	_displayDetailForFilm = idFilm => {
+		console.log('Display film with id ' + idFilm);
+		this.props.navigation.navigate('FilmDetail', { idFilm: idFilm });
+	};
+
 	_displayLoading() {
 		if (this.state.isLoading) {
 			return (
@@ -60,27 +67,26 @@ class Search extends React.Component {
 
 	render() {
 		return (
-			<View style={styles.main_container}>
-				<TextInput
-					style={styles.textinput}
-					placeholder="Titre du film"
-					onChangeText={text => this._searchTextInputChanged(text)}
-					onSubmitEditing={() => this._searchFilms()}
-				/>
-				<Button title="Rechercher" onPress={() => this._searchFilms()} />
-				<FlatList
-					data={this.state.films}
-					keyExtractor={item => item.id.toString()}
-					renderItem={({ item }) => <FilmItem film={item} />}
-					onEndReachedThreshold={0.5}
-					onEndReached={() => {
-						if (this.page < this.totalPages) {
-							this._loadFilms();
-						}
-					}}
-				/>
-				{this._displayLoading()}
-			</View>
+			<SafeAreaView style={styles.main_container}>
+				<View style={styles.main_container}>
+					<TextInput
+						style={styles.textinput}
+						placeholder="Titre du film"
+						onChangeText={text => this._searchTextInputChanged(text)}
+						onSubmitEditing={() => this._searchFilms()}
+					/>
+					<Button title="Rechercher" onPress={() => this._searchFilms()} />
+					<FilmList
+						films={this.state.films}
+						navigation={this.props.navigation}
+						loadFilms={this._loadFilms}
+						page={this.page}
+						totalPages={this.totalPages}
+						favoriteList={false} // Ici j'ai simplement ajouté un booléen à false pour indiquer qu'on n'est pas dans le cas de l'affichage de la liste des films favoris. Et ainsi pouvoir déclencher le chargement de plus de films lorsque l'utilisateur scrolle.
+					/>
+					{this._displayLoading()}
+				</View>
+			</SafeAreaView>
 		);
 	}
 }
@@ -88,7 +94,6 @@ class Search extends React.Component {
 const styles = StyleSheet.create({
 	main_container: {
 		flex: 1,
-		marginTop: 20,
 	},
 	textinput: {
 		marginLeft: 5,
